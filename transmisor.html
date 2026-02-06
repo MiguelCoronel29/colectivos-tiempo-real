@@ -3,17 +3,73 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Transmisor GPS Chofer</title>
+    <title>Transmisor GPS - Chofer</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        select,
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            margin: 10px;
+            border-radius: 6px;
+        }
+
+        #status {
+            font-size: 18px;
+            margin-top: 20px;
+            padding: 10px;
+            background: #222;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .info {
+            font-size: 14px;
+            color: #aaa;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 
 <body>
-    <h1>Transmitiendo GPS...</h1>
-    <p id="status">Esperando GPS...</p>
+
+    <h1>🚌 Transmisor GPS - Chofer</h1>
+
+    <label for="vehiculoSelect">Seleccioná el colectivo que estás transmitiendo:</label><br>
+    <select id="vehiculoSelect">
+        <option value="interno_01">Interno 01 (Verde)</option>
+        <option value="interno_02">Interno 02 (Naranja)</option>
+        <option value="interno_03">Interno 03 (Azul)</option>
+        <option value="interno_04">Interno 04 (Magenta)</option>
+        <option value="interno_05">Interno 05 (Amarillo)</option>
+    </select>
+
+    <br>
+    <button id="startBtn">Iniciar Transmisión GPS</button>
+
+    <p id="status">Esperando acción...</p>
+
+    <div class="info">
+        Mantenga esta página abierta en el celular del chofer.<br>
+        Permita el acceso a la ubicación cuando lo pida.
+    </div>
 
     <script>
-        // Pegá tu misma firebaseConfig aquí
+        // Configuración Firebase (la tuya)
         const firebaseConfig = {
             apiKey: "AIzaSyBLQTF45rPS0zUUNchDJ5DagygX8nojMxE",
             authDomain: "colectivos-tiempo-real.firebaseapp.com",
@@ -23,36 +79,71 @@
             messagingSenderId: "454978508967",
             appId: "1:454978508967:web:be55f535a0504029b5e382"
         };
+
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
         const status = document.getElementById('status');
+        const vehiculoSelect = document.getElementById('vehiculoSelect');
+        const startBtn = document.getElementById('startBtn');
 
-        // Pedir permiso GPS
-        if (navigator.geolocation) {
-            navigator.geolocation.watchPosition((position) => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                const speed = position.coords.speed || 0;
-                const heading = position.coords.heading || 0;
+        let selectedVehicle = vehiculoSelect.value;
+        let watchId = null;  // Para detener watchPosition si es necesario
 
-                db.ref('lines/linea_1/vehicles/interno_01').set({
-                    lat: lat,
-                    lng: lng,
-                    speed: speed,
-                    heading: heading,
-                    updated_at: Date.now(),
-                    online: true,
-                    token: 'gps_linea1_interno01'  // si ya pusiste reglas con token
-                });
+        // Actualizar vehículo seleccionado
+        vehiculoSelect.addEventListener('change', () => {
+            selectedVehicle = vehiculoSelect.value;
+            status.innerHTML = `Listo para transmitir como ${selectedVehicle}. Presione "Iniciar Transmisión GPS"`;
+        });
 
-                status.innerHTML = `Enviado: Lat ${lat.toFixed(5)}, Lng ${lng.toFixed(5)}`;
-            }, (error) => {
-                status.innerHTML = 'Error GPS: ' + error.message;
-            }, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
-        } else {
-            status.innerHTML = 'GPS no disponible en este navegador';
-        }
+        // Botón para iniciar (evita pedir GPS al cargar la página)
+        startBtn.addEventListener('click', () => {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                startBtn.textContent = 'Iniciar Transmisión GPS';
+                status.innerHTML = 'Transmisión detenida.';
+                return;
+            }
+
+            if (navigator.geolocation) {
+                status.innerHTML = `Solicitando GPS para ${selectedVehicle}...`;
+
+                watchId = navigator.geolocation.watchPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        const speed = position.coords.speed || 0;
+                        const heading = position.coords.heading || 0;
+
+                        // Token único por vehículo
+                        const token = 'gps_linea1_' + selectedVehicle;
+
+                        db.ref(`lines/linea_1/vehicles/${selectedVehicle}`).set({
+                            lat: lat,
+                            lng: lng,
+                            speed: speed,
+                            heading: heading,
+                            updated_at: Date.now(),
+                            online: true,
+                            token: token
+                        }).then(() => {
+                            status.innerHTML = `Enviado a ${selectedVehicle}:<br>Lat ${lat.toFixed(5)}, Lng ${lng.toFixed(5)}<br>Vel: ${speed.toFixed(1)} km/h`;
+                        }).catch((error) => {
+                            status.innerHTML = 'Error al enviar: ' + error.message;
+                        });
+                    },
+                    (error) => {
+                        status.innerHTML = 'Error GPS: ' + error.message;
+                    },
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                );
+
+                startBtn.textContent = 'Detener Transmisión';
+            } else {
+                status.innerHTML = 'GPS no disponible en este navegador';
+            }
+        });
     </script>
 </body>
 

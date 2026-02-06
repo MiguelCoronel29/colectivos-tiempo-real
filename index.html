@@ -3,47 +3,62 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>Colectivos en tiempo real</title>
+    <title>Colectivos en Tiempo Real - Guernica y Zona</title>
 
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <!-- Mapbox CSS y JS -->
-    <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet">
-    <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
 
-    <style>
-        #map {
-            width: 100%;
-            height: 500px;
-            /* altura del mapa */
-            margin-top: 20px;
-            border-radius: 8px;
-            border: 1px solid #444;
-        }
-    </style>
+    <!-- Mapbox CSS y JS (versión más reciente para mejor compatibilidad) -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.5.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.5.0/mapbox-gl.js"></script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
             background: #111;
             color: #fff;
+            margin: 0;
             padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        #buses {
+            max-width: 600px;
+            margin: 0 auto 20px auto;
         }
 
         .bus {
             background: #222;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-left: 5px solid #00ff00;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+            border-left: 6px solid;
+            font-size: 14px;
+        }
+
+        #map {
+            width: 100%;
+            height: 60vh;
+            /* 60% de la altura de la pantalla */
+            min-height: 400px;
+            border-radius: 10px;
+            border: 1px solid #444;
+            margin: 0 auto;
         }
     </style>
 </head>
 
 <body>
 
-    <h1>🚌 Colectivos en tiempo real</h1>
-    <div id="buses">Cargando...</div>
+    <h1>🚌 Colectivos en Tiempo Real</h1>
+    <div id="buses">Cargando colectivos...</div>
     <div id="map"></div>
+
     <script src="app.js"></script>
 </body>
 
