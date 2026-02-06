@@ -94,6 +94,7 @@ db.ref("lines/linea_1/vehicles").on("value", (snapshot) => {
     });
 
     // Centrar mapa en el primer vehículo activo (opcional)
+    /*
     if (sortedIds.length > 0) {
         const firstVehicle = vehicles[sortedIds[0]];
         if (firstVehicle.lat && firstVehicle.lng) {
@@ -103,5 +104,5 @@ db.ref("lines/linea_1/vehicles").on("value", (snapshot) => {
                 essential: true
             });
         }
-    }
+    }*/
 });
