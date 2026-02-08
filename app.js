@@ -72,19 +72,23 @@ db.ref("lines/linea_1/vehicles").on("value", (snapshot) => {
         const lngLat = [v.lng || -58.53, v.lat || -34.72];
 
         if (!markers[id]) {
-            // Crear div personalizado
+            // Crear contenedor
             const el = document.createElement('div');
-            el.style.backgroundImage = `url('bus.png')`; // o tu imagen
-            el.style.backgroundSize = 'contain';
             el.style.width = '48px';
             el.style.height = '48px';
-            el.style.backgroundRepeat = 'no-repeat';
-            el.style.backgroundPosition = 'center';
+            el.style.position = 'relative';
             el.style.transformOrigin = 'center center';
-            el.style.transition = 'transform 0.5s ease-out'; // más suave
-            el.style.willChange = 'transform'; // optimiza animaciones
-            el.style.position = 'relative';  // ← AGREGÁ ESTO
-            el.style.display = 'block';      // ← y esto para forzar visibilidad
+            el.style.transition = 'transform 0.5s ease-out';
+            el.style.willChange = 'transform';
+
+            // Crear imagen como <img> (más confiable que background)
+            const img = document.createElement('img');
+            img.src = 'bus.png'; // O tu archivo local 'bus.png'
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'contain';
+            img.style.pointerEvents = 'none'; // evita que interfiera con clics
+            el.appendChild(img);
 
             // Rotación inicial
             const heading = Number(v.heading) || 0;
@@ -107,18 +111,18 @@ db.ref("lines/linea_1/vehicles").on("value", (snapshot) => {
     `))
                 .addTo(map);
 
-            // Guardar referencia
+            // Guardar referencia al contenedor (el que tiene la img)
             markers[id]._customEl = el;
         } else {
-            // Mover posición (obligatorio para forzar actualización)
+            // Mover posición (forzar actualización de DOM)
             markers[id].setLngLat(lngLat);
 
-            // Rotar
+            // Rotar el contenedor
             const el = markers[id]._customEl;
             if (el) {
                 const heading = Number(v.heading) || 0;
                 el.style.transform = `rotate(${heading}deg)`;
-                console.log(`Rotando ${id} a ${heading}°`); // para depurar
+                console.log(`Rotando ${id} a ${heading}° (aplicado)`);
             } else {
                 console.warn(`No se encontró _customEl para ${id}`);
             }
