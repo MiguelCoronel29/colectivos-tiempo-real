@@ -83,6 +83,8 @@ db.ref("lines/linea_1/vehicles").on("value", (snapshot) => {
             el.style.transformOrigin = 'center center';
             el.style.transition = 'transform 0.5s ease-out'; // más suave
             el.style.willChange = 'transform'; // optimiza animaciones
+            el.style.position = 'relative';  // ← AGREGÁ ESTO
+            el.style.display = 'block';      // ← y esto para forzar visibilidad
 
             // Rotación inicial
             const heading = Number(v.heading) || 0;
