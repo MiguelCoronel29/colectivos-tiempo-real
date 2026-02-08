@@ -13,29 +13,26 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// Mapbox token (asegurate de que sea el tuyo real)
-mapboxgl.accessToken = 'pk.eyJ1IjoibWlndWVsLTMwIiwiYSI6ImNtbDlrcmJmcDA0YmwzZ3EwdXMwemRjZ2UifQ.FWkrX_a7mSsh4nrxcKPVwg';  // ← AQUÍ VA EL TOKEN
+// Mapbox token
+mapboxgl.accessToken = 'pk.eyJ1IjoibWlndWVsLTMwIiwiYSI6ImNtbDlrcmJmcDA0YmwzZ3EwdXMwemRjZ2UifQ.FWkrX_a7mSsh4nrxcKPVwg';
 
 const map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/dark-v11',
-    center: [-58.53, -34.72],  // Centro aproximado Guernica
+    center: [-58.53, -34.72],
     zoom: 12
 });
 
 const markers = {};
-const lastHeadings = {};  // ← AGREGÁ ESTA LÍNEA AQUÍ
+const lastHeadings = {}; // ← Para mantener último heading conocido
 
-// Colores por vehículo para distinguirlos
 const vehicleColors = {
-    'interno_01': '#00ff00',   // Verde
-    'interno_02': '#ff9900',   // Naranja
-    'interno_03': '#0099ff',   // Azul
-    'interno_04': '#ff00ff',   // Magenta
-    'interno_05': '#ffff00'    // Amarillo
+    'interno_01': '#00ff00',
+    'interno_02': '#ff9900',
+    'interno_03': '#0099ff',
+    'interno_04': '#ff00ff',
+    'interno_05': '#ffff00'
 };
-
-// Escuchar todos los vehículos en tiempo real
 
 db.ref("lines/linea_1/vehicles").on("value", (snapshot) => {
     const busesDiv = document.getElementById("buses");
@@ -48,13 +45,12 @@ db.ref("lines/linea_1/vehicles").on("value", (snapshot) => {
         return;
     }
 
-    // Ordenar por ID para que se vea consistente
     const sortedIds = Object.keys(vehicles).sort();
 
     sortedIds.forEach((id) => {
         const v = vehicles[id];
 
-        // --- Parte 1: Lista de texto ---
+        // Lista de texto
         const div = document.createElement("div");
         div.className = "bus";
         div.style.borderLeftColor = vehicleColors[id] || '#888888';
@@ -69,9 +65,20 @@ db.ref("lines/linea_1/vehicles").on("value", (snapshot) => {
         `;
         busesDiv.appendChild(div);
 
-        // --- Parte 2: Marcador en el mapa ---
+        // Marcador en el mapa
+        const lngLat = [v.lng || -58.53, v.lat || -34.72];
+
+        let heading = Number(v.heading);
+
+        // Actualizar heading solo si es válido y != 0
+        if (!isNaN(heading) && heading !== 0) {
+            lastHeadings[id] = heading;
+        }
+
+        // Heading final: último conocido o 0
+        const currentHeading = lastHeadings[id] || 0;
+
         if (!markers[id]) {
-            // Contenedor
             const el = document.createElement('div');
             el.style.width = '60px';
             el.style.height = '60px';
@@ -79,9 +86,8 @@ db.ref("lines/linea_1/vehicles").on("value", (snapshot) => {
             el.style.transformOrigin = 'center center';
             el.style.transition = 'transform 0.4s ease-out';
 
-            // Imagen
             const img = document.createElement('img');
-            img.src = 'bus.png'; // o 'https://img.icons8.com/fluency/48/bus.png'
+            img.src = 'bus.png'; // o URL pública
             img.style.width = '100%';
             img.style.height = '100%';
             img.style.objectFit = 'contain';
@@ -89,59 +95,47 @@ db.ref("lines/linea_1/vehicles").on("value", (snapshot) => {
             img.style.transition = 'transform 0.4s ease-out';
             el.appendChild(img);
 
+            // Rotación inicial
+            el.style.transform = `rotate(${currentHeading}deg)`;
+
             markers[id] = new mapboxgl.Marker({
                 element: el,
                 anchor: 'center'
             })
                 .setLngLat(lngLat)
                 .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`
-        <h3 style="margin:0; color:#000;">${id.toUpperCase()}</h3>
-        <p style="margin:8px 0 0;">
-            Lat: ${v.lat ? v.lat.toFixed(5) : '—'}<br>
-            Lng: ${v.lng ? v.lng.toFixed(5) : '—'}<br>
-            Velocidad: ${v.speed ? v.speed.toFixed(1) + ' km/h' : '—'}<br>
-            Dirección: ${Number(v.heading || 0).toFixed(0)}°<br>
-            Estado: ${v.online ? 'En línea' : 'Desconectado'}
-        </p>
-    `))
+                <h3 style="margin:0; color:#000;">${id.toUpperCase()}</h3>
+                <p style="margin:8px 0 0;">
+                    Lat: ${v.lat ? v.lat.toFixed(5) : '—'}<br>
+                    Lng: ${v.lng ? v.lng.toFixed(5) : '—'}<br>
+                    Velocidad: ${v.speed ? v.speed.toFixed(1) + ' km/h' : '—'}<br>
+                    Dirección: ${currentHeading.toFixed(0)}°<br>
+                    Estado: ${v.online ? 'En línea' : 'Desconectado'}
+                </p>
+            `))
                 .addTo(map);
 
-            // Guardar referencia al <img>
             markers[id]._customImg = img;
-
-            // Guardar heading inicial
-            const heading = Number(v.heading);
-            if (!isNaN(heading) && heading !== 0) {
-                lastHeadings[id] = heading;
-            }
         } else {
             markers[id].setLngLat(lngLat);
 
             const img = markers[id]._customImg;
             if (img) {
-                let heading = Number(v.heading);
-
-                // Si llega un heading válido y diferente de 0, actualizar
-                if (!isNaN(heading) && heading !== 0) {
-                    lastHeadings[id] = heading;
-                }
-
-                // Usar el último conocido (o 0 si nunca hubo)
-                const currentHeading = lastHeadings[id] || 0;
                 img.style.transform = `rotate(${currentHeading}deg)`;
                 console.log(`Rotando IMG de ${id} a ${currentHeading}° (último conocido)`);
 
-                // Forzar repaint (opcional pero útil)
+                // Forzar repaint
                 const el = img.parentElement;
                 if (el) {
                     el.style.display = 'none';
-                    el.offsetHeight; // trigger reflow
+                    el.offsetHeight;
                     el.style.display = 'block';
                 }
             }
         }
     });
 
+    // Botón centrar todos (ya lo tenés)
     document.getElementById('centerAllBtn').addEventListener('click', () => {
         if (Object.keys(markers).length === 0) return;
 
@@ -152,17 +146,4 @@ db.ref("lines/linea_1/vehicles").on("value", (snapshot) => {
 
         map.fitBounds(bounds, { padding: 50, maxZoom: 16 });
     });
-
-    // Centrar mapa en el primer vehículo activo (opcional)
-    /*
-    if (sortedIds.length > 0) {
-        const firstVehicle = vehicles[sortedIds[0]];
-        if (firstVehicle.lat && firstVehicle.lng) {
-            map.flyTo({
-                center: [firstVehicle.lng, firstVehicle.lat],
-                zoom: 14,
-                essential: true
-            });
-        }
-    }*/
 });
