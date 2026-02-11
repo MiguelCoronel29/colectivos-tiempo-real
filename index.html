@@ -14,6 +14,11 @@
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.5.0/mapbox-gl.js"></script>
     <link rel="manifest" href="manifest.json">
 
+    <!-- Google AdSense – movido al head para cargar temprano y evitar bloqueos por SW -->
+    <script async
+        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-app-pub-1831930018468380"
+        crossorigin="anonymous"></script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -83,11 +88,8 @@
     </script>
 
     <script src="app.js"></script>
-    <!-- Google AdMob Banner -->
-    <script async
-        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-app-pub-1831930018468380"
-        crossorigin="anonymous"></script>
 
+    <!-- Google AdSense Banner (contenedor y push) -->
     <ins class="adsbygoogle" style="display:block; margin: 15px auto; text-align:center;"
         data-ad-client="ca-app-pub-1831930018468380" data-ad-slot="2889817674" data-ad-format="auto"
         data-full-width-responsive="true"></ins>
